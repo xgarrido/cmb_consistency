@@ -126,7 +126,7 @@ class ACTPowerSpectrumData:
             print("Couldn't load file", bblwide_file)
             sys.exit()
 
-    def loglike(self, dell_tt, dell_te, dell_ee, yp=1.0, bl=0.0):
+    def loglike(self, dell_tt, dell_te, dell_ee, yp=1.0, bl=0.0, ap=0.0):
         """
         Pass in the dell_tt, dell_te, dell_ee, and yp values, get 2 * log L out.
         """
@@ -175,10 +175,10 @@ class ACTPowerSpectrumData:
             X_model_w = np.concatenate([X_model_w, cl_te_w * yp + bl * cl_tt_w])
         if self.use_ee:
             X_model_d = np.concatenate(
-                [X_model_d, cl_ee_d * yp ** 2 + 2 * bl * cl_te_d + bl ** 2 * cl_tt_d]
+                [X_model_d, cl_ee_d * yp ** 2 + 2 * bl * cl_te_d + bl ** 2 * cl_tt_d + ap]
             )
             X_model_w = np.concatenate(
-                [X_model_w, cl_ee_w * yp ** 2 + 2 * bl * cl_te_w + bl ** 2 * cl_tt_w]
+                [X_model_w, cl_ee_w * yp ** 2 + 2 * bl * cl_te_w + bl ** 2 * cl_tt_w + ap]
             )
 
         X_model = np.concatenate([X_model_d, X_model_w])
@@ -215,7 +215,8 @@ class ACTPol_lite_DR4(Likelihood):
         # State requisites to the theory code
         yp = {f"yp{i}": None for i in range(10)}
         bl = {f"bl{i}": None for i in range(10)}
-        return {**yp, **bl, "Cl": {cl: self.lmax for cl in self.components}}
+        ap = {f"ap{i}": None for i in range(10)}
+        return {**yp, **bl, **ap, "Cl": {cl: self.lmax for cl in self.components}}
 
     def _get_Cl(self):
         return self.theory.get_Cl(ell_factor=True)
@@ -230,8 +231,10 @@ class ACTPol_lite_DR4(Likelihood):
         yp = np.repeat([v for k, v in params_values.items() if k.startswith("yp")], 4)
         # Get bl values
         bl = np.repeat([v for k, v in params_values.items() if k.startswith("bl")], 4)
+        # Get ap values
+        ap = np.repeat([v for k, v in params_values.items() if k.startswith("ap")], 4)
         # yp2 = self.provider.get_param("yp2")
-        return self.data.loglike(Cl["tt"][2:], Cl["te"][2:], Cl["ee"][2:], yp=yp, bl=bl)
+        return self.data.loglike(Cl["tt"][2:], Cl["te"][2:], Cl["ee"][2:], yp=yp, bl=bl, ap=ap)
 
 
 # convenience class for combining with Planck

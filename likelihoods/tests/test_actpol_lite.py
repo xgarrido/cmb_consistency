@@ -1,6 +1,5 @@
 import likelihoods as lk
 import numpy as np
-import pytest
 
 
 def get_example_spectra():
@@ -64,7 +63,7 @@ def test_single_channel():
 
 def test_cobaya():
     """Test the Cobaya interface to the ACT likelihood."""
-    cobaya_installed = pytest.importorskip("cobaya", minversion="3.0")
+    # cobaya_installed = pytest.importorskip("cobaya", minversion="3.0")
     from cobaya.model import get_model
     from cobaya.yaml import yaml_load
 
@@ -95,14 +94,17 @@ def test_cobaya():
     info = yaml_load(info_yaml)
     info["params"].update({f"yp{i}": {"prior": {"min": 0.5, "max": 1.5}} for i in range(10)})
     info["params"].update({f"bl{i}": {"prior": {"min": 0.5, "max": 1.5}} for i in range(10)})
+    info["params"].update({f"ap{i}": {"prior": {"min": 0.5, "max": 1.5}} for i in range(10)})
     model = get_model(info)
     yp_values = {f"yp{i}": 1.0 for i in range(10)}
     bl_values = {f"bl{i}": 0.0 for i in range(10)}
-    chi2 = -2 * model.loglike({"ns": 1.0, "H0": 70, **yp_values, **bl_values})[0]
+    ap_values = {f"ap{i}": 0.0 for i in range(10)}
+    chi2 = -2 * model.loglike({"ns": 1.0, "H0": 70, **yp_values, **bl_values, **ap_values})[0]
     print("chi2", chi2)
     assert np.isclose(chi2, 359.12359844277086)
     # assert np.isfinite(model.loglike({"ns": 1.0, "H0": 70, "yp2": 1.0})[0])
 
 
 if __name__ == "__main__":
+    test_single_channel()
     test_cobaya()

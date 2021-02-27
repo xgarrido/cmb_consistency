@@ -119,7 +119,8 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
         self.l_max = self.lmax
         yp = {f"yp{i}": None for i in range(20)}
         bl = {f"bl{i}": None for i in range(20)}
-        return {**yp, **bl, "A_planck": None, "Cl": {cl: self.l_max for cl in self.use_cl}}
+        ap = {f"ap{i}": None for i in range(20)}
+        return {**yp, **bl, **ap, "A_planck": None, "Cl": {cl: self.l_max for cl in self.use_cl}}
 
     def binning_matrix(self, ix=0):
         # not used by main likelihood code
@@ -132,7 +133,7 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
             ]
         return lmin, lmax, m
 
-    def get_chi_squared(self, L0, ctt, cte, cee, calPlanck=1, yp=1.0, bl=0.0):
+    def get_chi_squared(self, L0, ctt, cte, cee, calPlanck=1, yp=1.0, bl=0.0, ap=0.0):
 
         # We need TT for TE leakage
         nbintt = 215
@@ -161,6 +162,7 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
                         yp[ixtt] ** 2 * cl[ix]
                         + 2 * bl[ixtt] * cl[ixte]
                         + bl[ixtt] ** 2 * cltt[ixtt]
+                        + ap[ixtt]
                     )
                 ix += 1
         cl /= calPlanck ** 2
@@ -182,6 +184,7 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
         Cls = self.provider.get_Cl(ell_factor=True)
         yp = np.repeat([v for k, v in data_params.items() if k.startswith("yp")], 10)
         bl = np.repeat([v for k, v in data_params.items() if k.startswith("bl")], 10)
+        ap = np.repeat([v for k, v in data_params.items() if k.startswith("ap")], 10)
         return -0.5 * self.get_chi_squared(
             0,
             Cls.get("tt"),
@@ -190,6 +193,7 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
             data_params[self.calibration_param],
             yp,
             bl,
+            ap,
         )
 
 
