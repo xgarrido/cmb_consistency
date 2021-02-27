@@ -1,0 +1,19 @@
+debug: false
+force: true
+
+likelihood:
+  likelihoods.planck_lite:
+    dataset_params:
+      use_cl: te ee
+
+params: !defaults [params_cosmo, params_calib]
+
+theory:
+  camb:
+    extra_args:
+      lens_potential_accuracy: 1
+
+sampler:
+  mcmc:
+
+output: chains/mcmc

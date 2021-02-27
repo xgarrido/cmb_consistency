@@ -1,0 +1,21 @@
+debug: false
+force: true
+
+likelihood:
+  likelihoods.ACTPol_lite_DR4:
+    components:
+      - te
+      - ee
+    lmax: 6000
+
+params: !defaults [params_cosmo]
+
+theory:
+  camb:
+    extra_args:
+      lens_potential_accuracy: 1
+
+sampler:
+  mcmc:
+
+output: chains/mcmc
