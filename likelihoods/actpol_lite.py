@@ -33,6 +33,10 @@ class ACTPowerSpectrumData:
         use_ee=True,
         lmax=5000,
         bmin=0,  # 0 for ACTPol only or ACTPol+WMAP, 24 for ACTPol+Planck
+        nbintt=40,
+        nbinte=40,
+        nbinee=40,
+        b0=5,
     ):
 
         # set up all the config variables
@@ -41,12 +45,12 @@ class ACTPowerSpectrumData:
         self.use_ee = use_ee
         self.lmax = lmax
 
-        self.b0 = 5  # first bin in TT theory selection
-        self.nbin = 240  # total bins
-        self.nbinw = 120  # total bins in single patch
-        self.nbintt = 40
-        self.nbinte = 40
-        self.nbinee = 40
+        self.b0 = b0  # first bin in TT theory selection
+        self.nbintt = nbintt
+        self.nbinte = nbinte
+        self.nbinee = nbinee
+        self.nbinw = nbintt + nbinte + nbinee  # total bins in single patch
+        self.nbin = 2 * self.nbinw  # total bins
         self.lmax_win = 7925  # total ell in window functions
         self.bmax_win = 520  # total bins in window functions
         self.bmax = 52  # total bins in windows for one spec
@@ -92,11 +96,11 @@ class ACTPowerSpectrumData:
 
         # covmat selection
         idx = np.array([], dtype=int)
-        if use_tt:
+        if self.use_tt:
             idx = np.concatenate([idx, np.arange(self.nbintt)])
-        if use_te:
+        if self.use_te:
             idx = np.concatenate([idx, self._nbintt + self.b0 + np.arange(self.nbinte)])
-        if use_ee:
+        if self.use_ee:
             idx = np.concatenate(
                 [idx, self._nbintt + self._nbinte + self.b0 + np.arange(self.nbinee)]
             )

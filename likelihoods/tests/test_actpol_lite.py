@@ -37,13 +37,17 @@ def test_single_channel():
     assert np.isclose(chi2, 97.4331220842641)
 
     # TE only
-    like = lk.ACTPowerSpectrumData(use_tt=False, use_te=True, use_ee=False)
+    like = lk.ACTPowerSpectrumData(
+        use_tt=False, use_te=True, use_ee=False, nbintt=45, nbinte=45, b0=0
+    )
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(TE) = {0:.12f}".format(chi2))
     assert np.isclose(chi2, 81.6194890026420)
 
     # EE only
-    like = lk.ACTPowerSpectrumData(use_tt=False, use_te=False, use_ee=True)
+    like = lk.ACTPowerSpectrumData(
+        use_tt=False, use_te=False, use_ee=True, nbintt=45, nbinte=45, nbinee=45, b0=0
+    )
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(EE) = {0:.12f}".format(chi2))
     assert np.isclose(chi2, 98.5427508626497)
@@ -52,13 +56,13 @@ def test_single_channel():
     like = lk.ACTPowerSpectrumData(use_tt=False, use_te=True, use_ee=True)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(TE+EE) = {0:.12f}".format(chi2))
-    assert np.isclose(chi2, 188.252270007376)
+    assert np.isclose(chi2, 170.290160102383)
 
     # TT+TE+EE only
     like = lk.ACTPowerSpectrumData(use_tt=True, use_te=True, use_ee=True)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(TT+TE+EE) = {0:.12f}".format(chi2))
-    assert np.isclose(chi2, 288.252869629064)
+    assert np.isclose(chi2, 269.521277093672)
 
 
 def test_cobaya():
