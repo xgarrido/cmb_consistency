@@ -158,11 +158,10 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
                 if tp == 2:  # EE
                     ixte = ix - len(self.used_bins[1])
                     ixtt = ixte - len(self.used_bins[0])
-                    cl[ix] = (
+                    cl[ix] = ap[ixtt] * (
                         yp[ixtt] ** 2 * cl[ix]
                         + 2 * bl[ixtt] * cl[ixte]
                         + bl[ixtt] ** 2 * cltt[ixtt]
-                        + ap[ixtt]
                     )
                 ix += 1
         cl /= calPlanck ** 2

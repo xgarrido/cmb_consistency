@@ -130,7 +130,7 @@ class ACTPowerSpectrumData:
             print("Couldn't load file", bblwide_file)
             sys.exit()
 
-    def loglike(self, dell_tt, dell_te, dell_ee, yp=1.0, bl=0.0, ap=0.0):
+    def loglike(self, dell_tt, dell_te, dell_ee, yp=1.0, bl=0.0, ap=1.0):
         """
         Pass in the dell_tt, dell_te, dell_ee, and yp values, get 2 * log L out.
         """
@@ -179,10 +179,10 @@ class ACTPowerSpectrumData:
             X_model_w = np.concatenate([X_model_w, cl_te_w * yp + bl * cl_tt_w])
         if self.use_ee:
             X_model_d = np.concatenate(
-                [X_model_d, cl_ee_d * yp ** 2 + 2 * bl * cl_te_d + bl ** 2 * cl_tt_d + ap]
+                [X_model_d, ap * (cl_ee_d * yp ** 2 + 2 * bl * cl_te_d + bl ** 2 * cl_tt_d)]
             )
             X_model_w = np.concatenate(
-                [X_model_w, cl_ee_w * yp ** 2 + 2 * bl * cl_te_w + bl ** 2 * cl_tt_w + ap]
+                [X_model_w, ap * (cl_ee_w * yp ** 2 + 2 * bl * cl_te_w + bl ** 2 * cl_tt_w)]
             )
 
         X_model = np.concatenate([X_model_d, X_model_w])

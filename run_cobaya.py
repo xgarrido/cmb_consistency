@@ -51,7 +51,7 @@ def main():
     info = yaml_load_file(args.yaml_file)
     nbin = int(args.nparams)
     if args.leakage:
-        info["params"].update({f"ap{i}": 0.0 for i in range(nbin)})
+        info["params"].update({f"ap{i}": 1.0 for i in range(nbin)})
         info["params"].update({f"yp{i}": 1.0 for i in range(nbin)})
         info["params"].update(
             {f"bl{i}": {"prior": {"min": -0.1, "max": +0.1}, "proposal": 0.05} for i in range(nbin)}
@@ -60,16 +60,16 @@ def main():
         info["params"].update(
             {f"yp{i}": {"prior": {"min": 0.5, "max": 1.5}, "proposal": 0.5} for i in range(nbin)}
         )
-        info["params"].update({f"ap{i}": 0.0 for i in range(nbin)})
+        info["params"].update({f"ap{i}": 1.0 for i in range(nbin)})
         info["params"].update({f"bl{i}": 0.0 for i in range(nbin)})
     elif args.ee_crap:
         info["params"].update(
-            {f"ap{i}": {"prior": {"min": -50, "max": +50}, "proposal": 1.0} for i in range(nbin)}
+            {f"ap{i}": {"prior": {"min": 0.5, "max": 1.5}, "proposal": 0.5} for i in range(nbin)}
         )
         info["params"].update({f"bl{i}": 0.0 for i in range(nbin)})
         info["params"].update({f"yp{i}": 1.0 for i in range(nbin)})
     else:
-        info["params"].update({f"ap{i}": 0.0 for i in range(nbin)})
+        info["params"].update({f"ap{i}": 1.0 for i in range(nbin)})
         info["params"].update({f"yp{i}": 1.0 for i in range(nbin)})
         info["params"].update({f"bl{i}": 0.0 for i in range(nbin)})
 
