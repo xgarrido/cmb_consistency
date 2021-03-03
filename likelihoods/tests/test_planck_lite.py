@@ -1,4 +1,3 @@
-import likelihoods as lk
 import numpy as np
 
 
@@ -36,7 +35,7 @@ def test_cobaya():
     model = get_model(info)
     yp = {f"yp{i}": 1.0 for i in range(20)}
     bl = {f"bl{i}": 0.0 for i in range(20)}
-    ap = {f"ap{i}": 0.0 for i in range(20)}
+    ap = {f"ap{i}": 1.0 for i in range(20)}
     chi2 = -2 * model.loglike({"ns": 1.0, "H0": 70, "A_planck": 1.0, **yp, **bl, **ap})[0]
     print("chi2", chi2)
     assert np.isclose(chi2, 4625.883691714649)
