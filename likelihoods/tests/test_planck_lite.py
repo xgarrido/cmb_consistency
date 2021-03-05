@@ -2,7 +2,7 @@ import numpy as np
 
 
 def test_cobaya():
-    """Test the Cobaya interface to the ACT likelihood."""
+    """Test the Cobaya interface to the Planck lite likelihood."""
     from cobaya.model import get_model
     from cobaya.yaml import yaml_load
 
