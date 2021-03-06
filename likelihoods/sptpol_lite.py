@@ -66,7 +66,7 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
         # Read in bandpowers
         # Should be TE, EE, TT, in that order from SPTpol analysis.
         dummy, self.spec = np.loadtxt(os.path.join(self.data_folder, self.bp_file), unpack=True)
-        # self.spec = spec.reshape((self.nband, self.nbin))
+        self.spec = self.spec[: self.nall]  # Only keep TE, EE
 
         # Read in covariance
         # Should be TE, EE
@@ -180,15 +180,17 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
         dbte /= cal_TE
         dbee /= cal_EE
 
-        # # Beam errors
+        # Beam errors
         beam1 = params_values.get("beam1")
         beam2 = params_values.get("beam2")
         beam_factor = (1 + self.beam_err[0] * beam1) * (1 + self.beam_err[1] * beam2)
-        delta_cb = np.concatenate([dbte, dbee]) * beam_factor - self.spec[self.nbin :]
+        delta_cb = np.concatenate([dbte, dbee]) * beam_factor - self.spec
 
-        chi2, detcov = self.get_chi_squared(self.cov, delta_cb)
-        self.log.debug(f"SPTPol X² = {chi2:.2f}")
-        return -0.5 * (chi2 + detcov)
+        chi2 = delta_cb @ np.linalg.inv(self.cov) @ delta_cb
+        sign, slogdet = np.linalg.slogdet(self.cov)
+
+        self.log.debug(f"SPTPol X²/ndof = {chi2:.2f}/{self.nall}")
+        return -0.5 * (chi2 + slogdet)
 
     def logp(self, **data_params):
         Cls = self.provider.get_Cl(ell_factor=True)

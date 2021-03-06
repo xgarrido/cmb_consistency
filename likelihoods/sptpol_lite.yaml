@@ -22,18 +22,18 @@ params:
       dist: norm
       loc: 0.0
       scale: 0.001
+    proposal: 0.002
     latex: \kappa
 
   czero_psTE_150:
-    prior:
-      min: 0.0
-      max: 2.5
+    value: 0.0
     latex: D_{3000}^{\rm{PS_{TE}}}
 
   czero_psEE_150:
     prior:
       min: 0.0
       max: 2.5
+    proposal: 0.01
     latex: D_{3000}^{\rm{PS_{EE}}}
 
   ADust_TE:
