@@ -1,0 +1,17 @@
+debug: false
+force: true
+
+likelihood:
+  likelihoods.sptpol_lite: null
+
+params: !defaults [params_cosmo, params_fg_sptpol]
+
+theory:
+  camb:
+    extra_args:
+      lens_potential_accuracy: 1
+
+sampler:
+  mcmc:
+
+output: chains/mcmc
