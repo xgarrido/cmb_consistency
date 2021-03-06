@@ -67,7 +67,7 @@ def main():
                 f"bl{i}": {
                     "prior": {"min": -0.1, "max": +0.1},
                     "proposal": 0.05,
-                    "latex": f"\beta_\ell^{i}",
+                    "latex": f"\\beta_\ell^{i}",
                 }
                 for i in range(nparams2sample)
             }
@@ -89,7 +89,7 @@ def main():
                 f"ap{i}": {
                     "prior": {"min": 0.5, "max": 1.5},
                     "proposal": 0.5,
-                    "latex": f"\alpha_\ell^{i}",
+                    "latex": f"\\alpha_\ell^{i}",
                 }
                 for i in range(nparams2sample)
             }
