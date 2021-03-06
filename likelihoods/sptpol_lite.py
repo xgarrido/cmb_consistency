@@ -13,6 +13,7 @@ from typing import Optional, Sequence
 import numpy as np
 from cobaya.conventions import _packages_path
 from cobaya.likelihoods._base_classes import _InstallableLikelihood
+from cobaya.log import LoggedError
 
 
 class _sptpol_lite_prototype(_InstallableLikelihood):
@@ -28,7 +29,7 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
     use_cl: Sequence[str] = ["tt", "te", "ee"]
     correct_aberration: Optional[bool] = True
 
-    data_folder: Optional[str] = "sptpol_2017_lite/sptpol_500d_TEEE"
+    data_folder: Optional[str] = "sptpol_2017_lite/SPTpol_Likelihood_1p3/data/sptpol_500d_TEEE"
     bp_file: Optional[str]
     cov_file: Optional[str]
     window_dir: Optional[str]
@@ -71,7 +72,11 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
         # Read in covariance
         # Should be TE, EE
         cov = np.fromfile(os.path.join(self.data_folder, self.cov_file))
-        self.cov = cov.reshape((self.nall, self.nall))
+        cov = cov.reshape((self.nall, self.nall))
+        self.log.debug(f"First entry of covariance matrix: {cov[0, 0]}")
+        self.invcov = np.linalg.inv(cov)
+        self.logp_const = np.log(2 * np.pi) * (-len(self.spec) / 2)
+        self.logp_const -= 0.5 * np.linalg.slogdet(cov)[1]
 
         # Read in windows
         # Should be TE, EE
@@ -96,12 +101,24 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
             self.log.debug(f"{var} = {getattr(self, var)}")
 
     def get_requirements(self):
+        expected_fg_params = {
+            "kappa": None,
+            "czero_psTE_150": None,
+            "czero_psEE_150": None,
+            "ADust_TE": None,
+            "ADust_EE": None,
+            "alphaDust_TE": None,
+            "alphaDust_EE": None,
+            "mapTcal": None,
+            "mapPcal": None,
+            "beam1": None,
+            "beam2": None,
+        }
         # State requisites to the theory code
-        # yp = {f"yp{i}": None for i in range(10)}
-        # bl = {f"bl{i}": None for i in range(10)}
-        # ap = {f"ap{i}": None for i in range(10)}
-        # return {**yp, **bl, **ap, "Cl": {cl: self.lmax for cl in self.use_cl}}
-        return dict(Cl={cl: self.lmax for cl in self.use_cl})
+        yp = {f"yp{i}": None for i in range(10)}
+        bl = {f"bl{i}": None for i in range(10)}
+        ap = {f"ap{i}": None for i in range(10)}
+        return {**expected_fg_params, **yp, **bl, **ap, "Cl": {cl: self.lmax for cl in self.use_cl}}
 
     def get_chi_squared(self, cov, res):
         from scipy.linalg import cho_factor, cho_solve
@@ -150,14 +167,15 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
         return dlte_fg, dlee_fg
 
     def loglike(self, dltt, dlte, dlee, **params_values):
-        yp = np.repeat([v for k, v in params_values.items() if k.startswith("yp")], 10)
-        bl = np.repeat([v for k, v in params_values.items() if k.startswith("bl")], 10)
-        ap = np.repeat([v for k, v in params_values.items() if k.startswith("ap")], 10)
+        yp = np.repeat([v for k, v in params_values.items() if k.startswith("yp")], 6)[: self.nbin]
+        bl = np.repeat([v for k, v in params_values.items() if k.startswith("bl")], 6)[: self.nbin]
+        ap = np.repeat([v for k, v in params_values.items() if k.startswith("ap")], 6)[: self.nbin]
 
         # Getting foregrounds
         dlte_fg, dlee_fg = self.get_foregrounds(dlte, dlee, **params_values)
 
         # CMB from theory
+        dltt_cmb = dltt[self.windows_lmin : self.windows_lmax + 1]
         dlte_cmb = dlte[self.windows_lmin : self.windows_lmax + 1]
         dlee_cmb = dlee[self.windows_lmin : self.windows_lmax + 1]
 
@@ -168,8 +186,15 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
             dlee_cmb += -beta * dipole_cosine * self.ells[1:] * np.diff(dlee[self.ells]) / 2
 
         # Now bin into bandpowers with the window functions.
-        dbte = self.windows[: self.nbin] @ (dlte_fg + dlte_cmb)
-        dbee = self.windows[self.nbin :] @ (dlee_fg + dlee_cmb)
+        win_te, win_ee = self.windows[: self.nbin], self.windows[self.nbin :]
+        dbte = yp * (win_te @ dlte_cmb) + bl * (win_te @ dltt_cmb)
+        dbee = ap * (
+            yp ** 2 * (win_ee @ dlee_cmb)
+            + 2 * bl * (win_ee @ dlte_cmb)
+            + bl ** 2 * (win_ee @ dltt_cmb)
+        )
+        dbte += win_te @ dlte_fg
+        dbee += win_ee @ dlee_fg
 
         # Scale theory spectrum by calibration:
         mapTcal = params_values.get("mapTcal")
@@ -186,13 +211,13 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
         beam_factor = (1 + self.beam_err[0] * beam1) * (1 + self.beam_err[1] * beam2)
         delta_cb = np.concatenate([dbte, dbee]) * beam_factor - self.spec
 
-        chi2 = delta_cb @ np.linalg.inv(self.cov) @ delta_cb
-        sign, slogdet = np.linalg.slogdet(self.cov)
+        chi2 = delta_cb @ self.invcov @ delta_cb
 
         self.log.debug(f"SPTPol X²/ndof = {chi2:.2f}/{self.nall}")
-        return -0.5 * (chi2 + slogdet)
+        return -0.5 * chi2  # + self.logp_const
 
     def logp(self, **data_params):
+        print("data_params", data_params)
         Cls = self.provider.get_Cl(ell_factor=True)
         return self.loglike(Cls.get("tt"), Cls.get("te"), Cls.get("ee"), **data_params)
 

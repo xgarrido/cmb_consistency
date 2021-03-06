@@ -134,16 +134,6 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
         return lmin, lmax, m
 
     def get_chi_squared(self, L0, ctt, cte, cee, calPlanck=1, yp=1.0, bl=0.0, ap=0.0):
-
-        # We need TT for TE leakage
-        nbintt = 215
-        cltt = np.empty(nbintt)
-        for i in range(nbintt):
-            cltt[i] = np.dot(
-                ctt[self.blmin[i] - L0 : self.blmax[i] - L0 + 1],
-                self.weights[self.blmin[i] : self.blmax[i] + 1],
-            )
-
         cl = np.empty(self.used_indices.shape)
         ix = 0
         for tp, cell in enumerate([ctt, cte, cee]):
@@ -153,16 +143,21 @@ class _planck_pliklite_prototype(_DataSetLikelihood):
                     self.weights[self.blmin[i] : self.blmax[i] + 1],
                 )
                 if tp == 1:  # TE
-                    ixtt = ix - len(self.used_bins[0])
-                    cl[ix] = yp[ixtt] * cl[ix] + bl[ixtt] * cltt[ixtt]
-                if tp == 2:  # EE
-                    ixte = ix - len(self.used_bins[1])
-                    ixtt = ixte - len(self.used_bins[0])
-                    cl[ix] = ap[ixtt] * (
-                        yp[ixtt] ** 2 * cl[ix]
-                        + 2 * bl[ixtt] * cl[ixte]
-                        + bl[ixtt] ** 2 * cltt[ixtt]
+                    cltt = np.dot(
+                        ctt[self.blmin[i] - L0 : self.blmax[i] - L0 + 1],
+                        self.weights[self.blmin[i] : self.blmax[i] + 1],
                     )
+                    cl[ix] = yp[i] * cl[ix] + bl[i] * cltt
+                if tp == 2:  # EE
+                    clte = np.dot(
+                        cte[self.blmin[i] - L0 : self.blmax[i] - L0 + 1],
+                        self.weights[self.blmin[i] : self.blmax[i] + 1],
+                    )
+                    cltt = np.dot(
+                        ctt[self.blmin[i] - L0 : self.blmax[i] - L0 + 1],
+                        self.weights[self.blmin[i] : self.blmax[i] + 1],
+                    )
+                    cl[ix] = ap[i] * (yp[i] ** 2 * cl[ix] + 2 * bl[i] * clte + bl[i] ** 2 * cltt)
                 ix += 1
         cl /= calPlanck ** 2
         diff = self.X_data - cl

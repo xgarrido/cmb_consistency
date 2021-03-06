@@ -156,28 +156,43 @@ class ACTPowerSpectrumData:
 
         # use 150x150 windows
         bmax, lmax_win = self.bmax, self.lmax_win
-        cl_tt_d = self.win_func_d[2 * bmax : 3 * bmax, 1:lmax_win] @ cltt[1:lmax_win]
-        cl_te_d = self.win_func_d[6 * bmax : 7 * bmax, 1:lmax_win] @ clte[1:lmax_win]
-        cl_ee_d = self.win_func_d[9 * bmax : 10 * bmax, 1:lmax_win] @ clee[1:lmax_win]
+        win_tt_d = self.win_func_d[2 * bmax : 3 * bmax, 1:lmax_win]
+        win_te_d = self.win_func_d[6 * bmax : 7 * bmax, 1:lmax_win]
+        win_ee_d = self.win_func_d[9 * bmax : 10 * bmax, 1:lmax_win]
         # use 150x150 windows
-        cl_tt_w = self.win_func_w[2 * bmax : 3 * bmax, 1:lmax_win] @ cltt[1:lmax_win]
-        cl_te_w = self.win_func_w[6 * bmax : 7 * bmax, 1:lmax_win] @ clte[1:lmax_win]
-        cl_ee_w = self.win_func_w[9 * bmax : 10 * bmax, 1:lmax_win] @ clee[1:lmax_win]
+        win_tt_w = self.win_func_w[2 * bmax : 3 * bmax, 1:lmax_win]
+        win_te_w = self.win_func_w[6 * bmax : 7 * bmax, 1:lmax_win]
+        win_ee_w = self.win_func_w[9 * bmax : 10 * bmax, 1:lmax_win]
 
         # Select ell range in theory
         b0, nbintt, nbinte, nbinee = self.b0, self.nbintt, self.nbinte, self.nbinee
-        cl_tt_d, cl_tt_w = cl_tt_d[b0 : b0 + nbintt], cl_tt_w[b0 : b0 + nbintt]
-        cl_te_d, cl_te_w = cl_te_d[b0 : b0 + nbinte], cl_te_w[b0 : b0 + nbinte]
-        cl_ee_d, cl_ee_w = cl_ee_d[b0 : b0 + nbinee], cl_ee_w[b0 : b0 + nbinee]
 
         X_model_d, X_model_w = [], []
         if self.use_tt:
+            cl_tt_d = win_tt_d @ cltt[1:lmax_win]
+            cl_tt_w = win_tt_w @ cltt[1:lmax_win]
+            cl_tt_d, cl_tt_w = cl_tt_d[b0 : b0 + nbintt], cl_tt_w[b0 : b0 + nbintt]
             X_model_d = np.concatenate([X_model_d, cl_tt_d])
             X_model_w = np.concatenate([X_model_w, cl_tt_w])
         if self.use_te:
+            cl_tt_d = win_te_d @ cltt[1:lmax_win]
+            cl_tt_w = win_te_w @ cltt[1:lmax_win]
+            cl_tt_d, cl_tt_w = cl_tt_d[b0 : b0 + nbintt], cl_tt_w[b0 : b0 + nbintt]
+            cl_te_d = win_te_d @ clte[1:lmax_win]
+            cl_te_w = win_te_w @ clte[1:lmax_win]
+            cl_te_d, cl_te_w = cl_te_d[b0 : b0 + nbinte], cl_te_w[b0 : b0 + nbinte]
             X_model_d = np.concatenate([X_model_d, cl_te_d * yp + bl * cl_tt_d])
             X_model_w = np.concatenate([X_model_w, cl_te_w * yp + bl * cl_tt_w])
         if self.use_ee:
+            cl_tt_d = win_ee_d @ cltt[1:lmax_win]
+            cl_tt_w = win_ee_w @ cltt[1:lmax_win]
+            cl_tt_d, cl_tt_w = cl_tt_d[b0 : b0 + nbintt], cl_tt_w[b0 : b0 + nbintt]
+            cl_te_d = win_ee_d @ clte[1:lmax_win]
+            cl_te_w = win_ee_w @ clte[1:lmax_win]
+            cl_te_d, cl_te_w = cl_te_d[b0 : b0 + nbinte], cl_te_w[b0 : b0 + nbinte]
+            cl_ee_d = win_ee_d @ clee[1:lmax_win]
+            cl_ee_w = win_ee_w @ clee[1:lmax_win]
+            cl_ee_d, cl_ee_w = cl_ee_d[b0 : b0 + nbinee], cl_ee_w[b0 : b0 + nbinee]
             X_model_d = np.concatenate(
                 [X_model_d, ap * (cl_ee_d * yp ** 2 + 2 * bl * cl_te_d + bl ** 2 * cl_tt_d)]
             )

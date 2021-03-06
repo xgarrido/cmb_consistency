@@ -46,32 +46,54 @@ def main():
         default=10,
         required=False,
     )
+    parser.add_argument(
+        "--nparams2sample",
+        help="Number of parameter to sample",
+        default=None,
+        required=False,
+    )
     args = parser.parse_args()
 
     info = yaml_load_file(args.yaml_file)
-    nbin = int(args.nparams)
+    nparams = int(args.nparams)
+    nparams2sample = int(args.nparams2sample) if args.nparams2sample is not None else nparams
+
+    for i in range(nparams):
+        info["params"].update({f"ap{i}": 1.0, f"yp{i}": 1.0, f"bl{i}": 0.0})
+
     if args.leakage:
-        info["params"].update({f"ap{i}": 1.0 for i in range(nbin)})
-        info["params"].update({f"yp{i}": 1.0 for i in range(nbin)})
         info["params"].update(
-            {f"bl{i}": {"prior": {"min": -0.1, "max": +0.1}, "proposal": 0.05} for i in range(nbin)}
+            {
+                f"bl{i}": {
+                    "prior": {"min": -0.1, "max": +0.1},
+                    "proposal": 0.05,
+                    "latex": f"\beta_\ell^{i}",
+                }
+                for i in range(nparams2sample)
+            }
         )
     elif args.polareff:
         info["params"].update(
-            {f"yp{i}": {"prior": {"min": 0.5, "max": 1.5}, "proposal": 0.5} for i in range(nbin)}
+            {
+                f"yp{i}": {
+                    "prior": {"min": 0.5, "max": 1.5},
+                    "proposal": 0.5,
+                    "latex": f"F_\ell^{i}",
+                }
+                for i in range(nparams2sample)
+            }
         )
-        info["params"].update({f"ap{i}": 1.0 for i in range(nbin)})
-        info["params"].update({f"bl{i}": 0.0 for i in range(nbin)})
     elif args.ee_crap:
         info["params"].update(
-            {f"ap{i}": {"prior": {"min": 0.5, "max": 1.5}, "proposal": 0.5} for i in range(nbin)}
+            {
+                f"ap{i}": {
+                    "prior": {"min": 0.5, "max": 1.5},
+                    "proposal": 0.5,
+                    "latex": f"\alpha_\ell^{i}",
+                }
+                for i in range(nparams2sample)
+            }
         )
-        info["params"].update({f"bl{i}": 0.0 for i in range(nbin)})
-        info["params"].update({f"yp{i}": 1.0 for i in range(nbin)})
-    else:
-        info["params"].update({f"ap{i}": 1.0 for i in range(nbin)})
-        info["params"].update({f"yp{i}": 1.0 for i in range(nbin)})
-        info["params"].update({f"bl{i}": 0.0 for i in range(nbin)})
 
     if args.output_base_dir is not None:
         info["output"] = args.output_base_dir
