@@ -217,7 +217,6 @@ class _sptpol_lite_prototype(_InstallableLikelihood):
         return -0.5 * chi2  # + self.logp_const
 
     def logp(self, **data_params):
-        print("data_params", data_params)
         Cls = self.provider.get_Cl(ell_factor=True)
         return self.loglike(Cls.get("tt"), Cls.get("te"), Cls.get("ee"), **data_params)
 
