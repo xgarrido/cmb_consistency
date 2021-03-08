@@ -1,0 +1,94 @@
+samples:
+  # ACTPol
+  ACTPol (DR4) - TE+EE:
+    path: data/act/default/te_ee
+    color: "#7F7F7F"
+  ACTPol (DR4) - TT+TE+EE:
+    path: data/act/default/tt_te_ee
+    color: "#000000"
+  ACTPol (DR4) - TE+EE - polar eff.:
+    path: data/act/polareff/te_ee
+    color: "#393B79"
+  ACTPol (DR4) - TT+TE+EE - polar eff.:
+    path: data/act/polareff/tt_te_ee
+    color: "#3182BD"
+  ACTPol (DR4) - TE+EE - TE leakage:
+    path: data/act/leakage/te_ee
+    color: "#5254A3"
+  ACTPol (DR4) - TT+TE+EE - TE leakage:
+    path: data/act/leakage/tt_te_ee
+    color: "#6BAED6"
+  ACTPol (DR4) - TE+EE - EE crap:
+    path: data/act/crap/te_ee
+    color: "#6B6ECF"
+  ACTPol (DR4) - TT+TE+EE - EE crap:
+    path: data/act/crap/tt_te_ee
+    color: "#9ECAE1"
+
+  # Planck 2018
+  # Planck 2018 + lowl TE - TE+EE:
+  #   path: data/planck+lowl/default/te_ee
+  #   color: "#7F7F7F"
+  Planck 2018 + lowl TE - TT+TE+EE:
+    path: data/planck+lowl/default/tt_te_ee
+    color: "#000000"
+  # Planck 2018 + lowl TE - TE+EE - polar eff.:
+  #   path: data/planck+lowl/polareff/te_ee
+  #   color: "#843C39"
+  Planck 2018 + lowl TE - TT+TE+EE - polar eff.:
+    path: data/planck+lowl/polareff/tt_te_ee
+    color: "#E6550D"
+  # Planck 2018 + lowl TE - TE+EE - TE leakage:
+  #   path: data/planck+lowl/leakage/te_ee
+  #   color: "#AD494A"
+  Planck 2018 + lowl TE - TT+TE+EE - TE leakage:
+    path: data/planck+lowl/leakage/tt_te_ee
+    color: "#FD8D3C"
+  # Planck 2018 + lowl TE - TE+EE - EE crap:
+  #   path: data/planck+lowl/crap/te_ee
+  #   color: "#D6616B"
+  Planck 2018 + lowl TE - TT+TE+EE - EE crap:
+    path: data/planck+lowl/crap/tt_te_ee
+    color: "#FDAE6B"
+
+  # SPTPol 2017
+  SPTPol (2017) - TE+EE:
+    path: data/sptpol/default/te_ee
+    color: "#000000"
+  SPTPol (2017) - TE+EE - polar eff.:
+    path: data/sptpol/polareff/te_ee
+    color: "#31A354"
+  SPTPol (2017) - TE+EE - TE leakage:
+    path: data/sptpol/leakage/te_ee
+    color: "#74C476"
+  SPTPol (2017) - TE+EE - EE crap:
+    path: data/sptpol/crap/te_ee
+    color: "#A1D99B"
+
+  # Planck 2018 + ACTPol
+  Planck 2018 TT + Planck lowl TE + ACTPol (DR4) TE+EE:
+    path: data/planck+lowl+act/default/tt_te_ee
+    color: "#636363"
+  Planck 2018 TT + Planck lowl TE + ACTPol (DR4) TE+EE - polar eff.:
+    path: data/planck+lowl+act/polareff/tt_te_ee
+    color: "#756BB1"
+  Planck 2018 TT + Planck lowl TE + ACTPol (DR4) TE+EE - TE leakage:
+    path: data/planck+lowl+act/leakage/tt_te_ee
+    color: "#9E9AC8"
+  Planck 2018 TT + Planck lowl TE + ACTPol (DR4) TE+EE - EE crap:
+    path: data/planck+lowl+act/crap/tt_te_ee
+    color: "#BCBDDC"
+
+  # Planck 2018 + SPTPol
+  Planck 2018 TT + Planck lowl TE + SPTPol (2017) TE+EE:
+    path: data/planck+lowl+sptpol/default/tt_te_ee
+    color: "#BDBDBD"
+  Planck 2018 TT + Planck lowl TE + SPTPol (2017) TE+EE - polar eff.:
+    path: data/planck+lowl+sptpol/polareff/tt_te_ee
+    color: "#8C6D31"
+  Planck 2018 TT + Planck lowl TE + SPTPol (2017) TE+EE - TE leakage:
+    path: data/planck+lowl+sptpol/leakage/tt_te_ee
+    color: "#BD9E39"
+  Planck 2018 TT + Planck lowl TE + SPTPol (2017) TE+EE - EE crap:
+    path: data/planck+lowl+sptpol/crap/tt_te_ee
+    color: "#E7BA52"
