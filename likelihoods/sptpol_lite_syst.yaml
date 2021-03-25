@@ -1,0 +1,16 @@
+path: null
+
+# Bandpower file
+bp_file: sptpol_500d_TTTEEE.bp_file
+
+# Covariance file (TE, EE)
+cov_file: sptpol_500d_TEEE_cov.bin
+
+# Windows directory
+window_dir: bpwfs_ascii
+
+# Beam error file
+beam_file: sptpol_500d_TEEE_beamerrs.txt
+
+# Flag for correcting aberration due to relative motion wrt CMB dipole
+correct_aberration: true
