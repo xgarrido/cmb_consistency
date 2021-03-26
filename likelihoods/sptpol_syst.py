@@ -1,9 +1,8 @@
 import numpy as np
+from spt.SPTPol import SPTPolPrototype
 
-from .sptpol_lite import _sptpol_lite_prototype
 
-
-class sptpol_lite_syst(_sptpol_lite_prototype):
+class sptpol_syst(SPTPolPrototype):
     def get_requirements(self):
         # State requisites to the theory code
         yp = {f"yp{i}": None for i in range(10)}

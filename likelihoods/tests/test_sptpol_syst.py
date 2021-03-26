@@ -13,7 +13,7 @@ class SPTPolLiteTest(unittest.TestCase):
     def setUp(self):
         from cobaya.install import install
 
-        install({"likelihood": {"likelihoods.sptpol_lite": None}}, path=packages_path)
+        install({"likelihood": {"likelihoods.sptpol_syst": None}}, path=packages_path)
 
     def test_cobaya(self):
         """Test the Cobaya interface to the SPTPol lite likelihood."""
@@ -45,7 +45,7 @@ class SPTPolLiteTest(unittest.TestCase):
 
         info = {
             "debug": True,
-            "likelihood": {"likelihoods.sptpol_lite_syst": None},
+            "likelihood": {"likelihoods.sptpol_syst": None},
             "theory": {"camb": {"extra_args": {"lens_potential_accuracy": 1}}},
             "params": {**cosmo_params, **fg_params},
             "modules": packages_path,
@@ -61,11 +61,11 @@ class SPTPolLiteTest(unittest.TestCase):
             ("te",): 74.72963434194682,
             ("ee",): 76.80106189735758,
         }.items():
-            info["likelihood"]["likelihoods.sptpol_lite_syst"] = dict(use_cl=list(use_cl))
+            info["likelihood"]["likelihoods.sptpol_syst"] = dict(use_cl=list(use_cl))
             model = get_model(info)
             chi2 = -2 * model.loglike({})[0]
             print("chi2", chi2)
-            self.assertAlmostEqual(chi2, expected_chi2)
+            self.assertAlmostEqual(chi2, expected_chi2, 5)
 
 
 if __name__ == "__main__":

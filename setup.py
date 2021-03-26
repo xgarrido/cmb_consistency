@@ -9,5 +9,8 @@ setup(
     packages=["likelihoods"],
     python_requires=">3",
     include_package_data=True,
-    install_requires=["cobaya"],
+    install_requires=[
+        "cobaya>=3.0.4",
+        "spt @ git+https://github.com/xgarrido/spt_likelihoods@master#egg=spt",
+    ],
 )
