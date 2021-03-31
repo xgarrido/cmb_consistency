@@ -56,16 +56,10 @@ class SPTPolLiteTest(unittest.TestCase):
         info["params"].update({f"ap{i}": 1.0 for i in range(10)})
         info["params"].update({f"dt{i}": 1.0 for i in range(10)})
 
-        for use_cl, expected_chi2 in {
-            ("te", "ee"): 162.98103875445057,
-            ("te",): 74.72963434194682,
-            ("ee",): 76.80106189735758,
-        }.items():
-            info["likelihood"]["likelihoods.sptpol_syst"] = dict(use_cl=list(use_cl))
-            model = get_model(info)
-            chi2 = -2 * model.loglike({})[0]
-            print("chi2", chi2)
-            self.assertAlmostEqual(chi2, expected_chi2, 5)
+        model = get_model(info)
+        chi2 = -2 * model.loglike({})[0]
+        print("chi2", chi2)
+        self.assertAlmostEqual(chi2, 162.98103875445057, 5)
 
 
 if __name__ == "__main__":

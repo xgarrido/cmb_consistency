@@ -1,5 +1,7 @@
+from typing import Optional
+
 import numpy as np
-from spt.SPTPol import SPTPolPrototype
+from sptpol_2017.sptpol import SPTPolPrototype
 
 
 class sptpol_syst(SPTPolPrototype):
@@ -27,13 +29,8 @@ class sptpol_syst(SPTPolPrototype):
         return {**requires, **expected_fg_params, **yp, **bl, **ap, **dt}
 
     def loglike(self, dltt, dlte, dlee, **params_values):
-        yp = np.repeat([v for k, v in params_values.items() if k.startswith("yp")], 6)[: self.nbin]
-        bl = np.repeat([v for k, v in params_values.items() if k.startswith("bl")], 6)[: self.nbin]
-        ap = np.repeat([v for k, v in params_values.items() if k.startswith("ap")], 6)[: self.nbin]
-        dt = np.repeat([v for k, v in params_values.items() if k.startswith("dt")], 6)[: self.nbin]
-
         # Getting foregrounds
-        dlte_fg, dlee_fg = self.get_foregrounds(dlte, dlee, **params_values)
+        dlte_fg, dlee_fg = self.get_foregrounds(**params_values)
 
         # CMB from theory
         lmin, lmax = self.lmin, self.lmax
@@ -41,15 +38,32 @@ class sptpol_syst(SPTPolPrototype):
         dlte_cmb = dlte[lmin:lmax]
         dlee_cmb = dlee[lmin:lmax]
 
+        # Calculate derivatives for this position in parameter space.
+        dlte = dlte[lmin - 1 : lmax + 1]
+        dlee = dlee[lmin - 1 : lmax + 1]
+        rs_te = self.rawspec_factor * dlte
+        rs_ee = self.rawspec_factor * dlee
+        deriv_te = 0.5 * (rs_te[2:] - rs_te[:-2])
+        deriv_ee = 0.5 * (rs_ee[2:] - rs_ee[:-2])
+
+        # Subtract the kappa parameter for super sample lensing.
+        # kappa parameter as described in Manzotti, et al. 2014, equation (32).
+        kappa = params_values.get("kappa")
+        dlte_fg -= kappa * deriv_te * self.cl_to_dl_conversion / self.ells
+        dlee_fg -= kappa * deriv_ee * self.cl_to_dl_conversion / self.ells
+
+        # Correct for aberration
         if self.correct_aberration:
             beta = 0.0012309
             dipole_cosine = -0.4033
-            dlte = dlte[lmin - 1 : lmax + 1]
-            dlee = dlee[lmin - 1 : lmax + 1]
-            dlte_cmb += -beta * dipole_cosine * self.ells * 0.5 * (dlte[2:] - dlte[:-2])
-            dlee_cmb += -beta * dipole_cosine * self.ells * 0.5 * (dlee[2:] - dlee[:-2])
+            dlte_fg -= beta * dipole_cosine * self.ells * 0.5 * (dlte[2:] - dlte[:-2])
+            dlee_fg -= beta * dipole_cosine * self.ells * 0.5 * (dlee[2:] - dlee[:-2])
 
         # Now bin into bandpowers with the window functions.
+        yp = np.repeat([v for k, v in params_values.items() if k.startswith("yp")], 6)[: self.nbin]
+        bl = np.repeat([v for k, v in params_values.items() if k.startswith("bl")], 6)[: self.nbin]
+        ap = np.repeat([v for k, v in params_values.items() if k.startswith("ap")], 6)[: self.nbin]
+        dt = np.repeat([v for k, v in params_values.items() if k.startswith("dt")], 6)[: self.nbin]
         win_te, win_ee = self.windows[: self.nbin], self.windows[self.nbin :]
         dbte = dt * (yp * (win_te @ dlte_cmb) + bl * (win_te @ dltt_cmb))
         dbee = ap * (
