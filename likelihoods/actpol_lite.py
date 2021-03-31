@@ -7,7 +7,6 @@ from typing import Optional, Sequence
 
 import numpy as np
 import pkg_resources
-from scipy import linalg  # need this for cholesky decomposition and inverse
 from scipy.io import FortranFile  # need this to read the fortran data format
 
 # load in cobaya class if it's there
@@ -31,6 +30,8 @@ class ACTPowerSpectrumData:
         use_tt=True,
         use_te=True,
         use_ee=True,
+        use_wide=True,
+        use_deep=True,
         lmax=5000,
         bmin=0,  # 0 for ACTPol only or ACTPol+WMAP, 24 for ACTPol+Planck
         nbintt=40,
@@ -43,6 +44,8 @@ class ACTPowerSpectrumData:
         self.use_tt = use_tt
         self.use_te = use_te
         self.use_ee = use_ee
+        self.use_deep = use_deep
+        self.use_wide = use_wide
         self.lmax = lmax
 
         self.b0 = b0  # first bin in TT theory selection
@@ -69,8 +72,6 @@ class ACTPowerSpectrumData:
         # set up the data file names
         like_file = os.path.join(self.data_dir, "cl_cmb_ap.dat")
         cov_file = os.path.join(self.data_dir, "c_matrix_ap.dat")
-        bbldeep_file = os.path.join(self.data_dir, "coadd_bpwf_15mJy_191127_lmin2.npz")
-        bblwide_file = os.path.join(self.data_dir, "coadd_bpwf_100mJy_191127_lmin2.npz")
 
         # like_file loading, contains bandpowers
         try:
@@ -105,32 +106,33 @@ class ACTPowerSpectrumData:
                 [idx, self._nbintt + self._nbinte + self.b0 + np.arange(self.nbinee)]
             )
 
-        self.idx = np.concatenate([idx, self._nbinw + idx])
+        self.idx = np.array([], dtype=int)
+        if self.use_deep:
+            self.idx = np.concatenate([self.idx, idx])
+        if self.use_wide:
+            self.idx = np.concatenate([self.idx, self._nbinw + idx])
+        print("Number of selected bins", len(self.idx))
         print("Selected bins", self.idx)
         self.X_data = self.X_data[self.idx]
-        self.fisher = linalg.cho_solve(
-            linalg.cho_factor(cov[self.idx[:, None], self.idx]), b=np.identity(len(self.idx))
-        )
+        self.inv_cov = np.linalg.inv(cov[np.ix_(self.idx, self.idx)])
 
         # read window functions
-        try:
-            bmax_win, lmax_win = self.bmax_win, self.lmax_win
-            bbldeep = np.load(bbldeep_file)["bpwf"]
-            self.win_func_d = np.zeros((bmax_win, lmax_win))
-            self.win_func_d[:bmax_win, 1:lmax_win] = bbldeep[:bmax_win, :lmax_win]
-        except IOError:
-            print("Couldn't load file", bbldeep_file)
-            sys.exit()
+        for field, fn in zip(
+            ["deep", "wide"],
+            ["coadd_bpwf_15mJy_191127_lmin2.npz", "coadd_bpwf_100mJy_191127_lmin2.npz"],
+        ):
+            try:
+                bmax_win, lmax_win = self.bmax_win, self.lmax_win
+                bbl_file = os.path.join(self.data_dir, fn)
+                bbl = np.load(bbl_file)["bpwf"]
+                setattr(self, f"win_func_{field[0]}", np.zeros((bmax_win, lmax_win)))
+                win_func = getattr(self, f"win_func_{field[0]}")
+                win_func[:bmax_win, 1:lmax_win] = bbl[:bmax_win, :lmax_win]
+            except IOError:
+                print("Couldn't load file", fn)
+                sys.exit()
 
-        try:
-            bblwide = np.load(bblwide_file)["bpwf"]
-            self.win_func_w = np.zeros((bmax_win, lmax_win))
-            self.win_func_w[:bmax_win, 1:lmax_win] = bblwide[:bmax_win, :lmax_win]
-        except IOError:
-            print("Couldn't load file", bblwide_file)
-            sys.exit()
-
-    def loglike(self, dell_tt, dell_te, dell_ee, yp=1.0, bl=0.0, ap=1.0):
+    def loglike(self, dell_tt, dell_te, dell_ee, yp=1.0, bl=0.0, ap=1.0, dt=1.0):
         """
         Pass in the dell_tt, dell_te, dell_ee, and yp values, get 2 * log L out.
         """
@@ -143,16 +145,16 @@ class ACTPowerSpectrumData:
         # array(a:b, c:d) in Fortran --> array[a-1:b, c-1:d] in Python
         # all of our data starts with l = 2
 
-        l_list = np.arange(2, self.lmax + 1)
+        ell = np.arange(2, self.lmax + 1)
 
         cltt = np.zeros(self.lmax_win)
         clte = np.zeros(self.lmax_win)
         clee = np.zeros(self.lmax_win)
 
         # convert to regular C_l, get rid of weighting
-        cltt[1 : self.lmax] = dell_tt[: self.lmax - 1] / l_list / (l_list + 1.0) * 2.0 * np.pi
-        clte[1 : self.lmax] = dell_te[: self.lmax - 1] / l_list / (l_list + 1.0) * 2.0 * np.pi
-        clee[1 : self.lmax] = dell_ee[: self.lmax - 1] / l_list / (l_list + 1.0) * 2.0 * np.pi
+        cltt[1 : self.lmax] = dell_tt[: self.lmax - 1] / ell / (ell + 1.0) * 2.0 * np.pi
+        clte[1 : self.lmax] = dell_te[: self.lmax - 1] / ell / (ell + 1.0) * 2.0 * np.pi
+        clee[1 : self.lmax] = dell_ee[: self.lmax - 1] / ell / (ell + 1.0) * 2.0 * np.pi
 
         # use 150x150 windows
         bmax, lmax_win = self.bmax, self.lmax_win
@@ -181,8 +183,8 @@ class ACTPowerSpectrumData:
             cl_te_d = win_te_d @ clte[1:lmax_win]
             cl_te_w = win_te_w @ clte[1:lmax_win]
             cl_te_d, cl_te_w = cl_te_d[b0 : b0 + nbinte], cl_te_w[b0 : b0 + nbinte]
-            X_model_d = np.concatenate([X_model_d, cl_te_d * yp + bl * cl_tt_d])
-            X_model_w = np.concatenate([X_model_w, cl_te_w * yp + bl * cl_tt_w])
+            X_model_d = np.concatenate([X_model_d, dt * (cl_te_d * yp + bl * cl_tt_d)])
+            X_model_w = np.concatenate([X_model_w, dt * (cl_te_w * yp + bl * cl_tt_w)])
         if self.use_ee:
             cl_tt_d = win_ee_d @ cltt[1:lmax_win]
             cl_tt_w = win_ee_w @ cltt[1:lmax_win]
@@ -200,10 +202,15 @@ class ACTPowerSpectrumData:
                 [X_model_w, ap * (cl_ee_w * yp ** 2 + 2 * bl * cl_te_w + bl ** 2 * cl_tt_w)]
             )
 
-        X_model = np.concatenate([X_model_d, X_model_w])
+        # Maybe we can do less calculations before !!
+        X_model = []
+        if self.use_deep:
+            X_model = np.concatenate([X_model, X_model_d])
+        if self.use_wide:
+            X_model = np.concatenate([X_model, X_model_w])
         diff_vec = self.X_data - X_model
-        ptemp = np.dot(self.fisher, diff_vec)
-        log_like_result = -0.5 * np.sum(ptemp * diff_vec)
+        chi2 = diff_vec @ self.inv_cov @ diff_vec
+        log_like_result = -0.5 * chi2
 
         return log_like_result
 
@@ -235,7 +242,8 @@ class ACTPol_lite_DR4(Likelihood):
         yp = {f"yp{i}": None for i in range(10)}
         bl = {f"bl{i}": None for i in range(10)}
         ap = {f"ap{i}": None for i in range(10)}
-        return {**yp, **bl, **ap, "Cl": {cl: self.lmax for cl in self.components}}
+        dt = {f"dt{i}": None for i in range(10)}
+        return {**yp, **bl, **ap, **dt, "Cl": {cl: self.lmax for cl in self.components}}
 
     def _get_Cl(self):
         return self.theory.get_Cl(ell_factor=True)
@@ -246,14 +254,13 @@ class ACTPol_lite_DR4(Likelihood):
 
     def logp(self, **params_values):
         Cl = self._get_Cl()
-        # Get yp values
         yp = np.repeat([v for k, v in params_values.items() if k.startswith("yp")], 4)
-        # Get bl values
         bl = np.repeat([v for k, v in params_values.items() if k.startswith("bl")], 4)
-        # Get ap values
         ap = np.repeat([v for k, v in params_values.items() if k.startswith("ap")], 4)
-        # yp2 = self.provider.get_param("yp2")
-        return self.data.loglike(Cl["tt"][2:], Cl["te"][2:], Cl["ee"][2:], yp=yp, bl=bl, ap=ap)
+        dt = np.repeat([v for k, v in params_values.items() if k.startswith("dt")], 4)
+        return self.data.loglike(
+            Cl["tt"][2:], Cl["te"][2:], Cl["ee"][2:], yp=yp, bl=bl, ap=ap, dt=dt
+        )
 
 
 # convenience class for combining with Planck

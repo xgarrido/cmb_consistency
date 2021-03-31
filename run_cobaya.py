@@ -41,6 +41,13 @@ def main():
         action="store_true",
     )
     parser.add_argument(
+        "--te-crap",
+        help="Study TE crap",
+        default=False,
+        required=False,
+        action="store_true",
+    )
+    parser.add_argument(
         "--nparams",
         help="Number of parameter for polar eff. and TE leakage",
         default=10,
@@ -59,7 +66,7 @@ def main():
     nparams2sample = int(args.nparams2sample) if args.nparams2sample is not None else nparams
 
     for i in range(nparams):
-        info["params"].update({f"ap{i}": 1.0, f"yp{i}": 1.0, f"bl{i}": 0.0})
+        info["params"].update({f"ap{i}": 1.0, f"yp{i}": 1.0, f"bl{i}": 0.0, f"dt{i}": 1.0})
 
     if args.leakage:
         info["params"].update(
@@ -90,6 +97,17 @@ def main():
                     "prior": {"min": 0.5, "max": 1.5},
                     "proposal": 0.5,
                     "latex": f"\\alpha_\ell^{i}",
+                }
+                for i in range(nparams2sample)
+            }
+        )
+    elif args.te_crap:
+        info["params"].update(
+            {
+                f"dt{i}": {
+                    "prior": {"min": 0.5, "max": 1.5},
+                    "proposal": 0.5,
+                    "latex": f"\\delta_\ell^{i}",
                 }
                 for i in range(nparams2sample)
             }

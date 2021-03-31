@@ -8,7 +8,7 @@ def test_cobaya():
 
     info_yaml = r"""
         likelihood:
-            likelihoods.planck_lite:
+            likelihoods.planck_lite_syst:
               dataset_params:
                 use_cl: tt te ee
 
@@ -18,22 +18,17 @@ def test_cobaya():
                     lens_potential_accuracy: 1
 
         params:
-            ns:
-                prior:
-                  min: 0.8
-                  max: 1.2
-            H0:
-                prior:
-                  min: 40
-                  max: 100
+            ns: 1.0
+            H0: 70
             A_planck: 1.0
         """
     info = yaml_load(info_yaml)
     info["params"].update({f"yp{i}": 1.0 for i in range(20)})
     info["params"].update({f"bl{i}": 0.0 for i in range(20)})
     info["params"].update({f"ap{i}": 1.0 for i in range(20)})
+    info["params"].update({f"dt{i}": 1.0 for i in range(20)})
     model = get_model(info)
-    chi2 = -2 * model.loglike({"ns": 1.0, "H0": 70, "A_planck": 1.0})[0]
+    chi2 = -2 * model.loglike({})[0]
     print("chi2", chi2)
     assert np.isclose(chi2, 4625.883691714649)
 
