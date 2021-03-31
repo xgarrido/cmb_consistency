@@ -24,9 +24,14 @@ class sptpol_syst(SPTPolPrototype):
             "beam1": None,
             "beam2": None,
         }
-        requires = super().get_requirements()
-        requires["Cl"].update({"tt": self.lmax})
-        return {**requires, **expected_fg_params, **yp, **bl, **ap, **dt}
+        return {
+            "Cl": {cl: self.lmax for cl in ["tt", "te", "ee"]},
+            **expected_fg_params,
+            **yp,
+            **bl,
+            **ap,
+            **dt,
+        }
 
     def loglike(self, dltt, dlte, dlee, **params_values):
         # Getting foregrounds

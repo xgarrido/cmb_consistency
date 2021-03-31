@@ -1,0 +1,31 @@
+path: null
+
+# Bandpower file
+bp_file: SPT3G_Y1_EETE_bandpowers.dat
+
+# Covariance file
+cov_file: SPT3G_Y1_EETE_covariance.dat
+
+# Beam covariance file
+beam_cov_file: SPT3G_Y1_EETE_beam_covariance.dat
+
+# Calibration (mapT, mapP) covariance
+calib_cov_file: SPT3G_Y1_EETE_cal_covariance.dat
+
+# Windows directory
+window_dir: windows
+
+# Spectra to use (order does not matter)
+spectra_to_fit:
+  - 90_Ex90_E
+  - 90_Tx90_E
+  - 90_Ex150_E
+  - 90_Tx150_E
+  - 90_Ex220_E
+  - 90_Tx220_E
+  - 150_Ex150_E
+  - 150_Tx150_E
+  - 150_Ex220_E
+  - 150_Tx220_E
+  - 220_Ex220_E
+  - 220_Tx220_E

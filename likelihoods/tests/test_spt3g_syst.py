@@ -9,14 +9,14 @@ packages_path = os.environ.get("COBAYA_PACKAGES_PATH") or os.path.join(
 )
 
 
-class SPTPolSystTest(unittest.TestCase):
+class SPT3GSystTest(unittest.TestCase):
     def setUp(self):
         from cobaya.install import install
 
-        install({"likelihood": {"likelihoods.sptpol_syst": None}}, path=packages_path)
+        install({"likelihood": {"likelihoods.spt3g_syst": None}}, path=packages_path)
 
     def test_cobaya(self):
-        """Test the Cobaya interface to the SPTPol lite likelihood."""
+        """Test the Cobaya interface to the SPT3G lite likelihood."""
         from cobaya.model import get_model
 
         cosmo_params = dict(
@@ -31,21 +31,30 @@ class SPTPolSystTest(unittest.TestCase):
 
         fg_params = dict(
             kappa=0.0,
-            czero_psTE_150=0.0,
-            czero_psEE_150=0.0837416,
-            ADust_TE=0.1647,
-            ADust_EE=0.0236,
-            alphaDust_TE=-2.42,
-            alphaDust_EE=-2.42,
-            mapTcal=1.0,
-            mapPcal=1.0,
-            beam1=0.0,
-            beam2=0.0,
+            Dl_Poisson_90x90=0.1,
+            Dl_Poisson_90x150=0.1,
+            Dl_Poisson_90x220=0.1,
+            Dl_Poisson_150x150=0.1,
+            Dl_Poisson_150x220=0.1,
+            Dl_Poisson_220x220=0.1,
+            TDust=19.6,
+            ADust_TE_150=0.1647,
+            BetaDust_TE=1.59,
+            AlphaDust_TE=-2.42,
+            ADust_EE_150=0.0236,
+            BetaDust_EE=1.59,
+            AlphaDust_EE=-2.42,
+            mapTcal90=1.0,
+            mapTcal150=1.0,
+            mapTcal220=1.0,
+            mapPcal90=1.0,
+            mapPcal150=1.0,
+            mapPcal220=1.0,
         )
 
         info = {
             "debug": True,
-            "likelihood": {"likelihoods.sptpol_syst": None},
+            "likelihood": {"likelihoods.spt3g_syst": None},
             "theory": {"camb": {"extra_args": {"lens_potential_accuracy": 1}}},
             "params": {**cosmo_params, **fg_params},
             "modules": packages_path,
@@ -59,7 +68,7 @@ class SPTPolSystTest(unittest.TestCase):
         model = get_model(info)
         chi2 = -2 * model.loglike({})[0]
         print("chi2", chi2)
-        self.assertAlmostEqual(chi2, 162.98103875445057, 5)
+        self.assertAlmostEqual(chi2, 1160.1925138672325, 2)
 
 
 if __name__ == "__main__":
