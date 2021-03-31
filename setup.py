@@ -7,10 +7,11 @@ setup(
     author="Xavier Garrido",
     author_email="xavier.garrido@gmail.com",
     packages=["likelihoods"],
-    python_requires=">3",
+    python_requires=">=3.5",
     include_package_data=True,
     install_requires=[
         "cobaya>=3.0.4",
+        "camb",
         "spt @ git+https://github.com/xgarrido/spt_likelihoods@master#egg=spt",
     ],
 )
