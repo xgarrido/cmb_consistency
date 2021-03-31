@@ -65,6 +65,34 @@ def test_single_channel():
     assert np.isclose(chi2, 269.521277093672)
 
 
+def test_deep_wide_field():
+    ell, dell_tt, dell_te, dell_ee = get_example_spectra()
+
+    # TT wide only
+    like = lk.ACTPowerSpectrumData(use_tt=True, use_te=False, use_ee=False, use_deep=False)
+    chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
+    print(f"ACTPol chi2(TT) = {chi2:.12f} (wide only)")
+    assert np.isclose(chi2, 40.610845288918)
+
+    # TT deep only
+    like = lk.ACTPowerSpectrumData(use_tt=True, use_te=False, use_ee=False, use_wide=False)
+    chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
+    print(f"ACTPol chi2(TT) = {chi2:.12f} (deep only)")
+    assert np.isclose(chi2, 58.408151760399)
+
+    # TT+TE+EE wide only
+    like = lk.ACTPowerSpectrumData(use_deep=False)
+    chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
+    print(f"ACTPol chi2(TT+TE+EE) = {chi2:.12f} (wide only)")
+    assert np.isclose(chi2, 132.265100393709)
+
+    # TT+TE+EE deep only
+    like = lk.ACTPowerSpectrumData(use_wide=False)
+    chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
+    print(f"ACTPol chi2(TT+TE+EE) = {chi2:.12f} (deep only)")
+    assert np.isclose(chi2, 138.818051236044)
+
+
 def test_cobaya():
     """Test the Cobaya interface to the ACT likelihood."""
     # cobaya_installed = pytest.importorskip("cobaya", minversion="3.0")
@@ -99,6 +127,7 @@ def test_cobaya():
     info["params"].update({f"yp{i}": 1.0 for i in range(10)})
     info["params"].update({f"bl{i}": 0.0 for i in range(10)})
     info["params"].update({f"ap{i}": 1.0 for i in range(10)})
+    info["params"].update({f"dt{i}": 1.0 for i in range(10)})
     model = get_model(info)
     chi2 = -2 * model.loglike({"ns": 1.0, "H0": 70})[0]
     print("chi2", chi2)
@@ -107,4 +136,5 @@ def test_cobaya():
 
 if __name__ == "__main__":
     test_single_channel()
+    test_deep_wide_field()
     test_cobaya()
