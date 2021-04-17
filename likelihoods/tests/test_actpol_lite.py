@@ -15,14 +15,14 @@ def get_example_spectra():
     return ell, dell_tt, dell_te, dell_ee
 
 
-# def test_bmin():
-#     # nonzero bmin
-#     ell, dell_tt, dell_te, dell_ee = get_example_spectra()
-#     like = lk.ACTPowerSpectrumData(bmin=24)
-#     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
-#     print("ACTPol chi2 = " + "{0:.12f}".format(chi2))
-#     print("Expected:     235.146031846935")
-#     assert np.isclose(chi2, 235.146031846935)
+def test_bmin():
+    # nonzero bmin
+    ell, dell_tt, dell_te, dell_ee = get_example_spectra()
+    like = lk.ACTPowerSpectrumData(bmin=24)
+    chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
+    print("ACTPol chi2 = " + "{0:.12f}".format(chi2))
+    print("Expected:     235.146031846935")
+    assert np.isclose(chi2, 235.146031846935)
 
 
 def test_single_channel():
@@ -37,17 +37,13 @@ def test_single_channel():
     assert np.isclose(chi2, 97.4331220842641)
 
     # TE only
-    like = lk.ACTPowerSpectrumData(
-        use_tt=False, use_te=True, use_ee=False, nbintt=45, nbinte=45, b0=0
-    )
+    like = lk.ACTPowerSpectrumData(use_tt=False, use_te=True, use_ee=False)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(TE) = {0:.12f}".format(chi2))
     assert np.isclose(chi2, 81.6194890026420)
 
     # EE only
-    like = lk.ACTPowerSpectrumData(
-        use_tt=False, use_te=False, use_ee=True, nbintt=45, nbinte=45, nbinee=45, b0=0
-    )
+    like = lk.ACTPowerSpectrumData(use_tt=False, use_te=False, use_ee=True)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(EE) = {0:.12f}".format(chi2))
     assert np.isclose(chi2, 98.5427508626497)
@@ -56,13 +52,13 @@ def test_single_channel():
     like = lk.ACTPowerSpectrumData(use_tt=False, use_te=True, use_ee=True)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(TE+EE) = {0:.12f}".format(chi2))
-    assert np.isclose(chi2, 170.290160102383)
+    assert np.isclose(chi2, 188.252270007375)
 
     # TT+TE+EE only
     like = lk.ACTPowerSpectrumData(use_tt=True, use_te=True, use_ee=True)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print("ACTPol chi2(TT+TE+EE) = {0:.12f}".format(chi2))
-    assert np.isclose(chi2, 269.521277093672)
+    assert np.isclose(chi2, 288.252869629064)
 
 
 def test_deep_wide_field():
@@ -84,13 +80,13 @@ def test_deep_wide_field():
     like = lk.ACTPowerSpectrumData(use_deep=False)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print(f"ACTPol chi2(TT+TE+EE) = {chi2:.12f} (wide only)")
-    assert np.isclose(chi2, 132.265100393709)
+    assert np.isclose(chi2, 146.653901865858)
 
     # TT+TE+EE deep only
     like = lk.ACTPowerSpectrumData(use_wide=False)
     chi2 = -2 * like.loglike(dell_tt, dell_te, dell_ee, 1.003)
     print(f"ACTPol chi2(TT+TE+EE) = {chi2:.12f} (deep only)")
-    assert np.isclose(chi2, 138.818051236044)
+    assert np.isclose(chi2, 143.100396999979)
 
 
 def test_cobaya():
@@ -122,12 +118,9 @@ def test_cobaya():
                 prior:
                   min: 40
                   max: 100
+            yp2: 1.0
         """
     info = yaml_load(info_yaml)
-    info["params"].update({f"yp{i}": 1.0 for i in range(10)})
-    info["params"].update({f"bl{i}": 0.0 for i in range(10)})
-    info["params"].update({f"ap{i}": 1.0 for i in range(10)})
-    info["params"].update({f"dt{i}": 1.0 for i in range(10)})
     model = get_model(info)
     chi2 = -2 * model.loglike({"ns": 1.0, "H0": 70})[0]
     print("chi2", chi2)
@@ -136,5 +129,6 @@ def test_cobaya():
 
 if __name__ == "__main__":
     test_single_channel()
+    test_bmin()
     test_deep_wide_field()
     test_cobaya()
