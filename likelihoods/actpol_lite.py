@@ -35,8 +35,8 @@ class ACTPowerSpectrumData:
         lmax=5000,
         bmin=0,  # 0 for ACTPol only or ACTPol+WMAP, 24 for ACTPol+Planck
         nbintt=40,
-        nbinte=40,
-        nbinee=40,
+        nbinte=45,
+        nbinee=45,
         b0=5,
     ):
 
@@ -58,13 +58,6 @@ class ACTPowerSpectrumData:
         self.bmax_win = 520  # total bins in window functions
         self.bmax = 52  # total bins in windows for one spec
 
-        # Original size
-        self._nbin = 260
-        self._nbinw = 130
-        self._nbintt = 40
-        self._nbinte = 45
-        self._nbinee = 45
-
         self.version = "ACTPollite dr4 v4"
         if print_version:
             print("Initializing ACTPol likelihood, version", self.version)
@@ -76,7 +69,7 @@ class ACTPowerSpectrumData:
         # like_file loading, contains bandpowers
         try:
             self.bval, self.X_data, self.X_sig = np.genfromtxt(
-                like_file, max_rows=self._nbin, delimiter=None, unpack=True
+                like_file, max_rows=self.nbin, delimiter=None, unpack=True
             )
         except IOError:
             print("Couldn't load file", like_file)
@@ -85,9 +78,9 @@ class ACTPowerSpectrumData:
         # cov_file loading
         try:
             f = FortranFile(cov_file, "r")
-            cov = f.read_reals(dtype=float).reshape((self._nbin, self._nbin))
-            for i_index in range(self._nbin):
-                for j_index in range(i_index, self._nbin):
+            cov = f.read_reals(dtype=float).reshape((self.nbin, self.nbin))
+            for i_index in range(self.nbin):
+                for j_index in range(i_index, self.nbin):
                     cov[i_index, j_index] = cov[j_index, i_index]
             # important: arrays in Fortran are 1-indexed,
             # but arrays in Python are 0-indexed. :(
@@ -100,17 +93,15 @@ class ACTPowerSpectrumData:
         if self.use_tt:
             idx = np.concatenate([idx, np.arange(self.nbintt)])
         if self.use_te:
-            idx = np.concatenate([idx, self._nbintt + self.b0 + np.arange(self.nbinte)])
+            idx = np.concatenate([idx, self.nbintt + np.arange(self.nbinte)])
         if self.use_ee:
-            idx = np.concatenate(
-                [idx, self._nbintt + self._nbinte + self.b0 + np.arange(self.nbinee)]
-            )
+            idx = np.concatenate([idx, self.nbintt + self.nbinte + np.arange(self.nbinee)])
 
         self.idx = np.array([], dtype=int)
         if self.use_deep:
             self.idx = np.concatenate([self.idx, idx])
         if self.use_wide:
-            self.idx = np.concatenate([self.idx, self._nbinw + idx])
+            self.idx = np.concatenate([self.idx, self.nbinw + idx])
         print("Number of selected bins", len(self.idx))
         print("Selected bins", self.idx)
         self.X_data = self.X_data[self.idx]
@@ -132,7 +123,7 @@ class ACTPowerSpectrumData:
                 print("Couldn't load file", fn)
                 sys.exit()
 
-    def loglike(self, dell_tt, dell_te, dell_ee, yp=1.0, bl=0.0, ap=1.0, dt=1.0):
+    def loglike(self, dell_tt, dell_te, dell_ee, yp2):
         """
         Pass in the dell_tt, dell_te, dell_ee, and yp values, get 2 * log L out.
         """
@@ -177,30 +168,17 @@ class ACTPowerSpectrumData:
             X_model_d = np.concatenate([X_model_d, cl_tt_d])
             X_model_w = np.concatenate([X_model_w, cl_tt_w])
         if self.use_te:
-            cl_tt_d = win_te_d @ cltt[1:lmax_win]
-            cl_tt_w = win_te_w @ cltt[1:lmax_win]
-            cl_tt_d, cl_tt_w = cl_tt_d[b0 : b0 + nbintt], cl_tt_w[b0 : b0 + nbintt]
             cl_te_d = win_te_d @ clte[1:lmax_win]
             cl_te_w = win_te_w @ clte[1:lmax_win]
-            cl_te_d, cl_te_w = cl_te_d[b0 : b0 + nbinte], cl_te_w[b0 : b0 + nbinte]
-            X_model_d = np.concatenate([X_model_d, dt * (cl_te_d * yp + bl * cl_tt_d)])
-            X_model_w = np.concatenate([X_model_w, dt * (cl_te_w * yp + bl * cl_tt_w)])
+            cl_te_d, cl_te_w = cl_te_d[:nbinte], cl_te_w[:nbinte]
+            X_model_d = np.concatenate([X_model_d, cl_te_d * yp2])
+            X_model_w = np.concatenate([X_model_w, cl_te_w * yp2])
         if self.use_ee:
-            cl_tt_d = win_ee_d @ cltt[1:lmax_win]
-            cl_tt_w = win_ee_w @ cltt[1:lmax_win]
-            cl_tt_d, cl_tt_w = cl_tt_d[b0 : b0 + nbintt], cl_tt_w[b0 : b0 + nbintt]
-            cl_te_d = win_ee_d @ clte[1:lmax_win]
-            cl_te_w = win_ee_w @ clte[1:lmax_win]
-            cl_te_d, cl_te_w = cl_te_d[b0 : b0 + nbinte], cl_te_w[b0 : b0 + nbinte]
             cl_ee_d = win_ee_d @ clee[1:lmax_win]
             cl_ee_w = win_ee_w @ clee[1:lmax_win]
-            cl_ee_d, cl_ee_w = cl_ee_d[b0 : b0 + nbinee], cl_ee_w[b0 : b0 + nbinee]
-            X_model_d = np.concatenate(
-                [X_model_d, ap * (cl_ee_d * yp ** 2 + 2 * bl * cl_te_d + bl ** 2 * cl_tt_d)]
-            )
-            X_model_w = np.concatenate(
-                [X_model_w, ap * (cl_ee_w * yp ** 2 + 2 * bl * cl_te_w + bl ** 2 * cl_tt_w)]
-            )
+            cl_ee_d, cl_ee_w = cl_ee_d[:nbinee], cl_ee_w[:nbinee]
+            X_model_d = np.concatenate([X_model_d, cl_ee_d * yp2 ** 2])
+            X_model_w = np.concatenate([X_model_w, cl_ee_w * yp2 ** 2])
 
         # Maybe we can do less calculations before !!
         X_model = []
@@ -221,6 +199,8 @@ class ACTPol_lite_DR4(Likelihood):
     components: Optional[Sequence] = ["tt", "te", "ee"]
     lmax: int = 7000
     bmin: int = 0
+    use_wide: bool = True
+    use_deep: bool = True
 
     def initialize(self):
         self.components = [c.lower() for c in self.components]
@@ -234,33 +214,22 @@ class ACTPol_lite_DR4(Likelihood):
             use_tt=("tt" in self.components),
             use_te=("te" in self.components),
             use_ee=("ee" in self.components),
+            use_wide=self.use_wide,
+            use_deep=self.use_deep,
+            nbintt=40,
+            nbinte=45,
+            nbinee=45,
+            b0=5,
             bmin=self.bmin,
         )
 
     def get_requirements(self):
         # State requisites to the theory code
-        yp = {f"yp{i}": None for i in range(10)}
-        bl = {f"bl{i}": None for i in range(10)}
-        ap = {f"ap{i}": None for i in range(10)}
-        dt = {f"dt{i}": None for i in range(10)}
-        return {**yp, **bl, **ap, **dt, "Cl": {cl: self.lmax for cl in self.components}}
-
-    def _get_Cl(self):
-        return self.theory.get_Cl(ell_factor=True)
-
-    def _get_theory(self, **params_values):
-        cl_theory = self._get_Cl()
-        return cl_theory
+        return {"yp2": None, "Cl": {cl: self.lmax for cl in self.components}}
 
     def logp(self, **params_values):
-        Cl = self._get_Cl()
-        yp = np.repeat([v for k, v in params_values.items() if k.startswith("yp")], 4)
-        bl = np.repeat([v for k, v in params_values.items() if k.startswith("bl")], 4)
-        ap = np.repeat([v for k, v in params_values.items() if k.startswith("ap")], 4)
-        dt = np.repeat([v for k, v in params_values.items() if k.startswith("dt")], 4)
-        return self.data.loglike(
-            Cl["tt"][2:], Cl["te"][2:], Cl["ee"][2:], yp=yp, bl=bl, ap=ap, dt=dt
-        )
+        Cl = self.theory.get_Cl(ell_factor=True)
+        return self.data.loglike(Cl["tt"][2:], Cl["te"][2:], Cl["ee"][2:], yp2=params_values["yp2"])
 
 
 # convenience class for combining with Planck
