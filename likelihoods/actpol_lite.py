@@ -47,6 +47,8 @@ class ACTPowerSpectrumData:
         self.use_deep = use_deep
         self.use_wide = use_wide
         self.lmax = lmax
+        print("Use wide", self.use_wide)
+        print("Use deep", self.use_deep)
 
         self.b0 = b0  # first bin in TT theory selection
         self.nbintt = nbintt
@@ -87,6 +89,17 @@ class ACTPowerSpectrumData:
         except IOError:
             print("Couldn't load file", cov_file)
             sys.exit()
+
+        # cull lmin in TT
+        if bmin > 0:
+            nbinw = self.nbinw
+            for i in range(bmin):
+                cov[i, :nbintt] = 0.0  # deep
+                cov[:nbintt, i] = 0.0  # deep
+                cov[i, i] = 1e10  # deep
+                cov[nbinw + i, nbinw : nbinw + nbintt] = 0.0  # wide
+                cov[nbinw : nbinw + nbintt, nbinw + i] = 0.0  # wide
+                cov[nbinw + i, nbinw + i] = 1e10  # wide
 
         # covmat selection
         idx = np.array([], dtype=int)
